@@ -2301,6 +2301,162 @@
     }).catch(e => { cityIndexP = null; throw e; });
     return cityIndexP;
   }
+  // Îles, sites et lieux touristiques qui ne sont pas des villes (noms en plusieurs langues séparés par /)
+  const SPOTS = `Klein Bonaire|BQ|12.16|-68.31
+Bonaire|BQ|12.18|-68.25
+Curaçao/Curacao/Kòrsou|CW|12.17|-69.0
+Aruba|AW|12.52|-69.97
+Saint-Martin/Sint Maarten/Saint Martin|MF|18.07|-63.05
+Saint-Barthélemy/St Barths/Saint Barthelemy|BL|17.9|-62.83
+Martinique|MQ|14.64|-61.02
+Guadeloupe|GP|16.25|-61.58
+Marie-Galante|GP|15.93|-61.27
+Les Saintes/Iles des Saintes|GP|15.86|-61.6
+La Réunion/Reunion/Île de la Réunion|RE|-21.12|55.53
+Mayotte|YT|-12.83|45.15
+Tahiti|PF|-17.65|-149.43
+Moorea/Mooréa|PF|-17.53|-149.83
+Bora-Bora/Bora Bora|PF|-16.5|-151.74
+Île Maurice/Mauritius/Ile Maurice|MU|-20.25|57.55
+Mahé/Mahe|SC|-4.68|55.48
+Praslin|SC|-4.33|55.73
+La Digue|SC|-4.36|55.84
+Maldives|MV|3.2|73.22
+Zanzibar|TZ|-6.13|39.31
+Nosy Be/Nosy-Be|MG|-13.33|48.27
+Bali|ID|-8.34|115.09
+Lombok|ID|-8.65|116.32
+Gili Trawangan/Îles Gili/Gili Islands|ID|-8.35|116.04
+Komodo|ID|-8.55|119.48
+Phuket|TH|7.88|98.39
+Koh Samui/Ko Samui|TH|9.51|100.01
+Koh Phi Phi/Ko Phi Phi/Phi Phi|TH|7.74|98.77
+Koh Lanta/Ko Lanta|TH|7.62|99.04
+Koh Tao/Ko Tao|TH|10.09|99.84
+Langkawi|MY|6.35|99.8
+Palawan|PH|9.83|118.74
+Boracay|PH|11.97|121.92
+Siargao|PH|9.85|126.05
+Baie d'Halong/Ha Long Bay/Halong Bay/Vịnh Hạ Long|VN|20.91|107.18
+Phú Quốc/Phu Quoc|VN|10.23|103.96
+Okinawa|JP|26.33|127.8
+Big Island/Île d'Hawaï/Hawaii Island|US|19.6|-155.5
+Oahu/O'ahu|US|21.47|-157.98
+Maui|US|20.8|-156.33
+Kauai/Kaua'i|US|22.06|-159.5
+Îles Galápagos/Galapagos Islands/Galápagos/Islas Galápagos|EC|-0.95|-90.97
+Île de Pâques/Easter Island/Rapa Nui/Isla de Pascua|CL|-27.12|-109.35
+Cozumel|MX|20.42|-86.92
+Isla Mujeres|MX|21.23|-86.73
+Holbox|MX|21.52|-87.38
+Roatán/Roatan|HN|16.32|-86.53
+San Andrés/San Andres|CO|12.55|-81.72
+Isla Margarita/Margarita|VE|11.0|-63.92
+Fernando de Noronha|BR|-3.85|-32.42
+Ilha Grande|BR|-23.15|-44.23
+Corse/Corsica/Córcega/Korsika|FR|42.15|9.1
+Sardaigne/Sardinia/Sardegna/Cerdeña/Sardinien|IT|40.12|9.01
+Sicile/Sicily/Sicilia/Sizilien|IT|37.6|14.02
+Capri|IT|40.55|14.24
+Ischia|IT|40.73|13.9
+Île d'Elbe/Elba/Isola d'Elba|IT|42.78|10.27
+Majorque/Mallorca/Majorca/Mallorca|ES|39.62|2.98
+Minorque/Menorca/Minorca|ES|39.95|4.08
+Ibiza/Eivissa|ES|38.98|1.43
+Formentera|ES|38.7|1.45
+Tenerife/Ténérife/Teneriffa|ES|28.29|-16.63
+Gran Canaria/Grande Canarie|ES|27.96|-15.59
+Lanzarote|ES|29.04|-13.63
+Fuerteventura|ES|28.36|-14.05
+La Palma|ES|28.68|-17.85
+Madère/Madeira|PT|32.75|-16.96
+Açores/Azores|PT|37.78|-25.5
+Santorin/Santorini/Thira|GR|36.39|25.46
+Mykonos|GR|37.45|25.33
+Crète/Crete/Kreta/Creta|GR|35.24|24.81
+Corfou/Corfu/Kerkyra/Korfu|GR|39.62|19.92
+Zante/Zakynthos|GR|37.79|20.9
+Naxos|GR|37.05|25.48
+Paros|GR|37.08|25.15
+Milos|GR|36.7|24.43
+Gozo|MT|36.04|14.24
+Comino|MT|36.01|14.33
+Île de Ré/Ile de Re|FR|46.2|-1.42
+Île d'Oléron/Ile d'Oleron|FR|45.93|-1.31
+Belle-Île-en-Mer/Belle-Ile|FR|47.33|-3.18
+Île d'Yeu/Ile d'Yeu|FR|46.71|-2.35
+Noirmoutier|FR|46.99|-2.25
+Porquerolles|FR|43.0|6.2
+Île de Bréhat/Brehat|FR|48.85|-3.0
+Mont-Saint-Michel/Mont Saint Michel|FR|48.636|-1.511
+Île de Skye/Isle of Skye/Skye|GB|57.3|-6.2
+Île de Wight/Isle of Wight|GB|50.69|-1.3
+Jersey|JE|49.21|-2.13
+Guernesey/Guernsey|GG|49.45|-2.58
+Îles d'Aran/Aran Islands|IE|53.12|-9.7
+Lofoten/Îles Lofoten|NO|68.21|13.86
+Svalbard/Spitzberg|SJ|78.22|15.65
+Îles Féroé/Faroe Islands/Føroyar|FO|62.0|-6.8
+Gotland|SE|57.47|18.49
+Bornholm|DK|55.12|14.92
+Hvar|HR|43.17|16.44
+Brač/Brac|HR|43.33|16.63
+Krk|HR|45.08|14.59
+Korčula/Korcula|HR|42.96|17.13
+Machu Picchu|PE|-13.163|-72.545
+Grand Canyon|US|36.1|-112.11
+Yellowstone|US|44.43|-110.59
+Yosemite|US|37.75|-119.59
+Monument Valley|US|36.98|-110.11
+Uluru/Ayers Rock|AU|-25.344|131.036
+Grande Barrière de corail/Great Barrier Reef|AU|-18.29|147.7
+Chutes Victoria/Victoria Falls|ZW|-17.92|25.86
+Chutes d'Iguazú/Iguazu Falls/Cataratas do Iguaçu|AR|-25.69|-54.44
+Pétra/Petra|JO|30.33|35.44
+Wadi Rum|JO|29.58|35.42
+Angkor Vat/Angkor Wat/Angkor|KH|13.41|103.87
+Taj Mahal|IN|27.175|78.042
+Cappadoce/Cappadocia/Kapadokya|TR|38.64|34.83
+Pamukkale|TR|37.92|29.12
+Mont Fuji/Mount Fuji/Fujisan|JP|35.36|138.73
+Kilimandjaro/Kilimanjaro|TZ|-3.07|37.35
+Serengeti|TZ|-2.33|34.83
+Masai Mara/Maasai Mara|KE|-1.5|35.14
+Parc Kruger/Kruger National Park|ZA|-24.0|31.5
+Sossusvlei|NA|-24.73|15.29
+Merzouga|MA|31.1|-4.01
+Salar d'Uyuni/Salar de Uyuni/Uyuni Salt Flat|BO|-20.13|-67.49
+Torres del Paine|CL|-50.94|-73.41
+Perito Moreno|AR|-50.49|-73.05
+Lacs de Plitvice/Plitvice Lakes/Plitvička jezera|HR|44.88|15.62
+Cinque Terre|IT|44.13|9.71
+Dolomites/Dolomiti/Dolomiten|IT|46.41|11.84
+Cervin/Matterhorn|CH|45.976|7.658
+Mont Blanc|FR|45.833|6.865
+Stonehenge|GB|51.179|-1.826
+Chaussée des Géants/Giant's Causeway|GB|55.24|-6.51
+Falaises de Moher/Cliffs of Moher|IE|52.97|-9.43
+Blue Lagoon/Lagon bleu|IS|63.88|-22.45
+Geysir|IS|64.31|-20.3
+Jökulsárlón/Jokulsarlon|IS|64.05|-16.18
+Bagan|MM|21.17|94.86
+Borobudur|ID|-7.608|110.204
+Grande Muraille de Chine/Great Wall of China/Mutianyu|CN|40.43|116.56
+Zhangjiajie|CN|29.32|110.43
+Camp de base de l'Everest/Everest Base Camp|NP|28.0|86.86
+Chichén Itzá/Chichen Itza|MX|20.684|-88.568
+Tulum|MX|20.21|-87.46
+Pain de Sucre/Sugarloaf/Pão de Açúcar|BR|-22.949|-43.157
+Christ Rédempteur/Christ the Redeemer/Cristo Redentor|BR|-22.952|-43.21
+Lençóis Maranhenses/Lencois Maranhenses|BR|-2.5|-43.1
+Chapada Diamantina|BR|-12.6|-41.5
+Bonito|BR|-21.13|-56.48
+Jericoacoara|BR|-2.79|-40.51
+Morro de São Paulo/Morro de Sao Paulo|BR|-13.38|-38.91
+Ilha Bela/Ilhabela|BR|-23.78|-45.36
+Pantanal|BR|-17.6|-57.0`.split('\n').map(l => { const [names, c, la, ln] = l.split('|'); const ns = names.split('/'); return { ns, ks: ns.map(norm), c, la: +la, ln: +ln, p: 0, spot: true }; });
+  let countryTop = null;
+  const enRegion = (() => { try { return new Intl.DisplayNames(['en'], { type: 'region' }); } catch (e) { return null; } })();
   function searchPlaces(query) {
     if (!cityIndex) return [];
     let [q, cq] = query.split(',').map(s => norm(s));
@@ -2312,6 +2468,23 @@
       if (fr.startsWith(q) && (q.length >= 3 || fr === q)) {
         const tk = norm(target), r = cityIndex.find(x => x.k === tk);
         if (r) push(r, fr.replace(/(^|[\s-])\S/g, s => s.toUpperCase()));
+      }
+    }
+    // îles et sites touristiques
+    const spotRank = s => s.ks.some(k => k === q) ? 0 : s.ks.some(k => k.startsWith(q)) ? 1 : 2;
+    if (q.length >= 3) for (const s of SPOTS.filter(s => s.ks.some(k => k.startsWith(q) || k.includes(' ' + q) || k.includes('-' + q))).sort((a, b) => spotRank(a) - spotRank(b))) {
+      const i = s.ks.findIndex(k => k.startsWith(q) || k.includes(' ' + q) || k.includes('-' + q));
+      if (i < 0) continue;
+      const name = (LANG === 'fr' ? s.ns[0] : s.ns.find((n, j) => j > 0 && !/[éèêàçîôû]/i.test(n)) || s.ns[0]);
+      push({ n: name, c: s.c, la: s.la, ln: s.ln, p: 0, k: s.ks[0], spot: true }, i > 0 && s.ks[i] !== norm(name) ? s.ns[i] : name);
+    }
+    // nom de pays ou de territoire : ses principales villes
+    if (q.length >= 3) {
+      if (!countryTop) { countryTop = new Map(); for (const r of cityIndex) { const l = countryTop.get(r.c); if (!l) countryTop.set(r.c, [r]); else if (l.length < 2) l.push(r); } }
+      for (const [cc, top] of countryTop) {
+        const names = [norm(countryName(cc)), enRegion ? norm(enRegion.of(cc) || '') : ''];
+        if (names.some(n => n && (n.startsWith(q) || n === q))) top.forEach(r => push(r));
+        if (out.length >= 8) break;
       }
     }
     for (const r of cityIndex) { if (out.length >= 10) break; if (r.k.startsWith(q)) push(r); }
@@ -2347,7 +2520,7 @@
       $('add-results').innerHTML = results.length
         ? results.map((r, i) => `<button class="result ${i === kbd ? 'kbd' : ''}" data-i="${i}">
             <span>${esc(r.display)}${r.display !== r.n ? ` <small>(${esc(r.n)})</small>` : ''}</span>
-            <small>${esc(countryName(r.c))}${r.p >= 1000 ? ` · ${r.p >= 1e6 ? (r.p / 1e6).toFixed(1).replace('.', L(',', '.', {pt: `.`, es: `.`, it: `.`, de: `.`})) + ' M' : Math.round(r.p / 1000) + ' k'} ${L('hab.', 'pop.', {pt: `hab.`, es: `hab.`, it: `ab.`, de: `Einw.`})}` : ''}</small></button>`).join('')
+            <small>${r.spot ? '📍 ' : ''}${esc(countryName(r.c))}${r.p >= 1000 ? ` · ${r.p >= 1e6 ? (r.p / 1e6).toFixed(1).replace('.', L(',', '.', {pt: `.`, es: `.`, it: `.`, de: `.`})) + ' M' : Math.round(r.p / 1000) + ' k'} ${L('hab.', 'pop.', {pt: `hab.`, es: `hab.`, it: `ab.`, de: `Einw.`})}` : ''}</small></button>`).join('')
         : (input.value.trim().length >= 2 ? `<div class="empty">${L('Aucun résultat. Essaie le nom local ou en anglais, ou place-le à la main.', 'No results. Try the local name, or place it by hand.', {pt: `Nenhum resultado. Tente o nome local ou posicione à mão.`, es: `Sin resultados. Prueba con el nombre local o colócalo a mano.`, it: `Nessun risultato. Prova il nome locale o posizionalo a mano.`, de: `Keine Ergebnisse. Versuche den lokalen Namen oder setze ihn von Hand.`})}</div>` : '');
       $('add-results').querySelectorAll('.result').forEach(b => b.onclick = () => choosePlace(results[+b.dataset.i]));
     };
