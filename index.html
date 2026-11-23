@@ -1292,10 +1292,17 @@
   function traceCountry(ctx, country, W, H) {
     const px = lng => (lng + 180) * (W / 360), py = lat => (90 - lat) * (H / 180);
     ctx.beginPath();
-    [-360, 0, 360].forEach(shift => country.rings.forEach(r => {
-      r.forEach(([lng, lat], i) => { const x = px(lng + shift), y = py(lat); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
-      ctx.closePath();
-    }));
+    // Chaque contour n'est dessiné qu'aux décalages (±360°) où il est visible : on évite d'énormes tracés hors de l'image,
+    // que certaines cartes graphiques remplissent mal (bande de couleur sur l'océan)
+    if (!country.bb) country.bb = country.rings.map(r => { let mn = Infinity, mx = -Infinity; for (const p of r) { if (p[0] < mn) mn = p[0]; if (p[0] > mx) mx = p[0]; } return [mn, mx]; });
+    country.rings.forEach((r, ri) => {
+      const [mn, mx] = country.bb[ri];
+      [0, -360, 360].forEach(shift => {
+        if (mx + shift < -180 || mn + shift > 180) return;
+        r.forEach(([lng, lat], i) => { const x = px(lng + shift), y = py(lat); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+        ctx.closePath();
+      });
+    });
   }
   // Dessin de la carte : complet au changement de style, sinon seulement les pays dont la couleur change
   let earthSig = null, drawnStyle = null;
