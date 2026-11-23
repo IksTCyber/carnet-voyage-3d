@@ -90,6 +90,10 @@
     .menu .style-row button.active { border-color: var(--ink); background: #fff; }
     .lang-switch { display: flex; background: rgba(255,255,255,0.92); border-radius: 20px; padding: 3px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
     select.lang-switch { border: none; font: inherit; font-weight: 700; font-size: .78rem; padding: 0 10px; color: var(--ink); cursor: pointer; height: 36px; }
+    .sync-state { display: inline-block; margin-left: 4px; padding: 1px 7px; border-radius: 10px; background: rgba(82,183,136,.15); color: #2d6a4f; font-weight: 600; cursor: pointer; }
+    .sync-state.s-auth { background: #fff1db; color: #9a5b00; }
+    .sync-state.s-error { background: #fde8e8; color: #b42318; }
+    .sync-state.s-busy, .sync-state.s-pending { background: rgba(58,134,255,.12); color: #1d4ed8; }
     .lang-row { display: grid !important; grid-template-columns: 1fr 1fr; gap: 6px; }
     .lang-switch button { border: none; background: transparent; font-weight: 700; font-size: .78rem; padding: 0 10px; border-radius: 16px; color: #8a8077; }
     .lang-switch button.active { background: var(--ink); color: #fff; }
@@ -540,7 +544,7 @@
     <span class="globe-emoji" id="header-avatar">🌍</span>
     <span>
       <h1><span id="header-title">Mon Carnet de Voyage</span><span class="souvenir-badge" data-en="Keepsake" data-pt="Lembrança" data-es="Recuerdo" data-it="Ricordo" data-de="Erinnerung">Souvenir</span></h1>
-      <p id="stats-text">…</p>
+      <p><span id="stats-text">…</span> <span id="sync-state" class="sync-state hidden" onclick="event.stopPropagation(); onSyncChip()"></span></p>
     </span>
   </button>
 
@@ -590,6 +594,7 @@
     <button class="mi edit-only" onclick="menuDo(openGuestDialog)">👀 <span data-en="Guest mode<small>Hide editing buttons to show your journal</small>" data-pt="Modo convidado&lt;small&gt;Esconde os botões de edição para mostrar o diário&lt;/small&gt;" data-es="Modo invitado&lt;small&gt;Oculta los botones de edición para enseñar tu diario&lt;/small&gt;" data-it="Modalità ospite&lt;small&gt;Nasconde i pulsanti di modifica per mostrare il diario&lt;/small&gt;" data-de="Gastmodus&lt;small&gt;Blendet Bearbeiten-Knöpfe aus, um dein Tagebuch zu zeigen&lt;/small&gt;">Mode invité<small>Masque les boutons de modification pour montrer ton carnet</small></span></button>
     <button class="mi guest-only" onclick="menuDo(openGuestDialog)">🔓 <span data-en="Leave guest mode" data-pt="Sair do modo convidado" data-es="Salir del modo invitado" data-it="Esci dalla modalità ospite" data-de="Gastmodus verlassen">Quitter le mode invité</span></button>
     <button class="mi" onclick="menuDo(openHelp)">❓ <span data-en="How it works" data-pt="Como funciona" data-es="Cómo funciona" data-it="Come funziona" data-de="So funktioniert&#x27;s">Comment ça marche</span></button>
+    <button class="mi hidden" id="menu-sync" onclick="menuDo(openSyncDialog)">☁️ <span data-en="Sync with Google Drive<small>The same journal on your phone and computer</small>" data-pt="Sincronizar com o Google Drive&lt;small&gt;O mesmo diário no celular e no PC&lt;/small&gt;" data-es="Sincronizar con Google Drive&lt;small&gt;El mismo diario en tu móvil y tu PC&lt;/small&gt;" data-it="Sincronizza con Google Drive&lt;small&gt;Lo stesso diario su telefono e PC&lt;/small&gt;" data-de="Mit Google Drive synchronisieren&lt;small&gt;Dasselbe Tagebuch auf Handy und PC&lt;/small&gt;">Synchroniser avec Google Drive<small>Le même carnet sur ton téléphone et ton PC</small></span></button>
     <button class="mi hidden" id="menu-install" onclick="menuDo(installApp)">📲 <span data-en="Install the app<small>An icon on your home screen, works offline</small>" data-pt="Instalar o app&lt;small&gt;Um ícone na tela inicial, funciona offline&lt;/small&gt;" data-es="Instalar la app&lt;small&gt;Un icono en tu pantalla de inicio, funciona sin conexión&lt;/small&gt;" data-it="Installa l&#x27;app&lt;small&gt;Un&#x27;icona nella schermata Home, funziona offline&lt;/small&gt;" data-de="App installieren&lt;small&gt;Ein Symbol auf dem Startbildschirm, funktioniert offline&lt;/small&gt;">Installer l'application<small>Une icône sur ton écran d'accueil, même hors ligne</small></span></button>
     <button class="mi" onclick="menuDo(toggleFullscreen)">⛶ <span data-en="Full screen" data-pt="Tela cheia" data-es="Pantalla completa" data-it="Schermo intero" data-de="Vollbild">Plein écran</span></button>
   </div>
@@ -753,6 +758,7 @@
   const FR_ALIASES = {"londres":"London","cracovie":"Kraków","bucarest":"Bucharest","vienne":"Vienna","francfort":"Frankfurt am Main","cologne":"Köln","bruxelles":"Brussels","gand":"Gent","anvers":"Antwerpen","ostende":"Ostend","bruges":"Brugge","louvain":"Leuven","malines":"Mechelen","liege":"Liège","barcelone":"Barcelona","seville":"Sevilla","saragosse":"Zaragoza","lisbonne":"Lisbon","porto":"Porto","venise":"Venice","naples":"Naples","turin":"Turin","genes":"Genoa","bergame":"Bergamo","come":"Como","sienne":"Siena","pise":"Pisa","verone":"Verona","padoue":"Padova","bologne":"Bologna","syracuse":"Siracusa","athenes":"Athens","moscou":"Moscow","saint-petersbourg":"Saint Petersburg","varsovie":"Warsaw","pekin":"Beijing","shanghai":"Shanghai","canton":"Guangzhou","le caire":"Cairo","alger":"Algiers","le cap":"Cape Town","new york":"New York City","la nouvelle-orleans":"New Orleans","mexico":"Mexico City","edimbourg":"Edinburgh","copenhague":"Copenhagen","geneve":"Geneva","bale":"Basel","berne":"Bern","la haye":"The Hague","aix-la-chapelle":"Aachen","mayence":"Mainz","treves":"Trier","nuremberg":"Nürnberg","ratisbonne":"Regensburg","salzbourg":"Salzburg","kiev":"Kyiv","goteborg":"Gothenburg","rio":"Rio de Janeiro","la havane":"Havana","tanger":"Tangier","marrakech":"Marrakesh","beyrouth":"Beirut","damas":"Damascus","jerusalem":"Jerusalem","singapour":"Singapore","saigon":"Ho Chi Minh City","ho chi minh":"Ho Chi Minh City","bombay":"Mumbai","calcutta":"Kolkata","la mecque":"Mecca","istanbul":"Istanbul","cappadoce":"Göreme","malte":"Valletta","la valette":"Valletta","reykjavik":"Reykjavík","pristina":"Pristina","mitrovica":"Mitrovicë","brasov":"Braşov","rasnov":"Râşnov","dusseldorf":"Düsseldorf","munich":"Munich","prague":"Prague","florence":"Florence","milan":"Milan","rome":"Rome","tokyo":"Tokyo","kyoto":"Kyoto","seoul":"Seoul","bangkok":"Bangkok","dubrovnik":"Dubrovnik","split":"Split","belgrade":"Belgrade","sofia":"Sofia","budapest":"Budapest","stockholm":"Stockholm","helsinki":"Helsinki","tallinn":"Tallinn","riga":"Riga","vilnius":"Vilnius","oslo":"Oslo","dublin":"Dublin","cork":"Cork","amsterdam":"Amsterdam","rotterdam":"Rotterdam","luxembourg":"Luxembourg","zurich":"Zürich","quebec":"Québec","montreal":"Montréal","vancouver":"Vancouver","toronto":"Toronto","sao paulo":"São Paulo","buenos aires":"Buenos Aires","bogota":"Bogotá","lima":"Lima","abidjan":"Abidjan","yamoussoukro":"Yamoussoukro","kinshasa":"Kinshasa","brazzaville":"Brazzaville","dakar":"Dakar","casablanca":"Casablanca","nairobi":"Nairobi","johannesburg":"Johannesburg","sydney":"Sydney","melbourne":"Melbourne","auckland":"Auckland","klagenfurt":"Klagenfurt am Wörthersee","antalya":"Antalya","bran":"Bran","ljubljana":"Ljubljana","bellingham":"Bellingham","seattle":"Seattle","san francisco":"San Francisco","los angeles":"Los Angeles","las vegas":"Las Vegas","miami":"Miami","chicago":"Chicago","washington":"Washington, D.C.","boston":"Boston","bergen":"Bergen","rovaniemi":"Rovaniemi","kamakura":"Kamakura","mannheim":"Mannheim","berlin":"Berlin","hambourg":"Hamburg","dresde":"Dresden","leipzig":"Leipzig","strasbourg":"Strasbourg","sete":"Sète","nice":"Nice","marseille":"Marseille","lyon":"Lyon","paris":"Paris","bordeaux":"Bordeaux"};
 
   const BLANK_EDITION = true;
+  const GDRIVE_CLIENT_ID = '40360320059-s1nuvasruoagvh5taie0s02j7785qtn8.apps.googleusercontent.com';
   // ── Langue (6 langues) ──
   const LANGS = { fr: '🇫🇷 Français', en: '🇬🇧 English', pt: '🇧🇷 Português', es: '🇪🇸 Español', it: '🇮🇹 Italiano', de: '🇩🇪 Deutsch' };
   const LOCALES = { fr: 'fr-FR', en: 'en-GB', pt: 'pt-BR', es: 'es-ES', it: 'it-IT', de: 'de-DE' };
@@ -967,6 +973,7 @@
       cities = saved.map(normalizeCity);
       trips = ((await this.kvGet('trips')) || []).map(normalizeTrip);
       settings = (await this.kvGet('settings')) || {};
+      tombstones = (await this.kvGet('tombstones')) || {};
       sortAll();
       if (!this.idb) toast(L("Stockage indisponible dans ce navigateur : les modifications ne seront pas conservées.", "Storage unavailable in this browser: changes won't be kept.", {pt: `Armazenamento indisponível neste navegador: as alterações não serão salvas.`, es: `Almacenamiento no disponible en este navegador: los cambios no se guardarán.`, it: `Archiviazione non disponibile in questo browser: le modifiche non verranno salvate.`, de: `Speicher in diesem Browser nicht verfügbar: Änderungen werden nicht gespeichert.`}), 6000);
     },
@@ -1000,12 +1007,14 @@
       if (i >= 0) cities[i] = city; else cities.push(city);
       sortAll(); onDataChanged();
       if (mode === 'cloud') { const b = clone(city); delete b.id; return this.queue(city.id, () => this.db.doc('cities/' + city.id).set(b)); }
+      city.updatedAt = Date.now(); markChanged('c', city.id);
       return this.queue('local-c', () => this.kvSet('cities', cities));
     },
     deleteCity(id) {
       cities = cities.filter(c => c.id !== id);
       onDataChanged();
       if (mode === 'cloud') return this.queue(id, () => this.db.doc('cities/' + id).delete());
+      markChanged('c', id, true);
       return this.queue('local-c', () => this.kvSet('cities', cities));
     },
     saveTrip(trip) {
@@ -1013,17 +1022,20 @@
       if (i >= 0) trips[i] = trip; else trips.push(trip);
       sortAll(); onDataChanged();
       if (mode === 'cloud') { const b = clone(trip); delete b.id; return this.queue('t' + trip.id, () => this.db.doc('trips/' + trip.id).set(b)); }
+      trip.updatedAt = Date.now(); markChanged('t', trip.id);
       return this.queue('local-t', () => this.kvSet('trips', trips));
     },
     deleteTrip(id) {
       trips = trips.filter(t => t.id !== id);
       onDataChanged();
       if (mode === 'cloud') return this.queue('t' + id, () => this.db.doc('trips/' + id).delete());
+      markChanged('t', id, true);
       return this.queue('local-t', () => this.kvSet('trips', trips));
     },
     saveSettings(s) {
       settings = s; updateMenu();
       if (mode === 'cloud') return this.queue('settings', () => this.db.doc('settings/main').set(clone(s)));
+      s.updatedAt = Date.now(); markChanged('s');
       return this.queue('local-s', () => this.kvSet('settings', s));
     },
     replaceAll(list, tripList) {
@@ -1037,7 +1049,12 @@
           for (const t of trips) { const b = clone(t); delete b.id; await this.queue('t' + t.id, () => this.db.doc('trips/' + t.id).set(b)); }
         })();
       }
-      return Promise.all([this.queue('local-c', () => this.kvSet('cities', cities)), this.queue('local-t', () => this.kvSet('trips', trips))]);
+      const now = Date.now();
+      oldC.forEach(c => { if (!list.some(n => n.id === c.id)) tombstones[c.id] = now; });
+      oldT.forEach(x => { if (!trips.some(n => n.id === x.id)) tombstones[x.id] = now; });
+      cities.forEach(c => c.updatedAt = now); trips.forEach(x => x.updatedAt = now);
+      markChanged('all');
+      return Promise.all([this.queue('local-c', () => this.kvSet('cities', cities)), this.queue('local-t', () => this.kvSet('trips', trips)), this.kvSet('tombstones', tombstones)]);
     },
 
     // Fichiers (photos, vidéos, musique) → identifiant
@@ -1071,12 +1088,12 @@
       let u;
       if (mode === 'embedded') { u = (EMBEDDED.media || {})[id]; if (!u) throw new Error('missing'); }
       else if (mode === 'cloud') u = '/_blob/' + id;
-      else { const blob = await this.kvGet('photo:' + id); if (!blob) throw new Error('missing'); u = URL.createObjectURL(blob); }
+      else { let blob = await this.kvGet('photo:' + id); if (!blob) blob = await driveFetchBlob(id); if (!blob) throw new Error('missing'); u = URL.createObjectURL(blob); }
       this.urlCache.set(id, u);
       return u;
     },
     async blob(id) {
-      if (mode === 'local') return this.kvGet('photo:' + id);
+      if (mode === 'local') return (await this.kvGet('photo:' + id)) || driveFetchBlob(id);
       const r = await fetch(await this.src(id));
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.blob();
@@ -1098,11 +1115,11 @@
       lat: +c.lat, lng: +c.lng, status: ['visited', 'lived', 'project'].includes(c.status) ? c.status : 'visited',
       date: c.date || '', note: c.note || '', photos: Array.isArray(c.photos) ? c.photos.filter(p => p && p.id) : [],
       cover: c.cover || '', companions: Array.isArray(c.companions) ? c.companions.filter(Boolean).map(String) : [],
-      createdAt: +c.createdAt || 0
+      createdAt: +c.createdAt || 0, updatedAt: +c.updatedAt || 0
     };
   }
   function normalizeTrip(t) {
-    return { id: t.id, name: String(t.name || L('Voyage', 'Trip', {pt: `Viagem`, es: `Viaje`, it: `Viaggio`, de: `Reise`})), start: t.start || '', end: t.end || '', note: t.note || '', cityIds: Array.isArray(t.cityIds) ? t.cityIds.map(String) : [], createdAt: +t.createdAt || 0 };
+    return { id: t.id, name: String(t.name || L('Voyage', 'Trip', {pt: `Viagem`, es: `Viaje`, it: `Viaggio`, de: `Reise`})), start: t.start || '', end: t.end || '', note: t.note || '', cityIds: Array.isArray(t.cityIds) ? t.cityIds.map(String) : [], createdAt: +t.createdAt || 0, updatedAt: +t.updatedAt || 0 };
   }
   function sortAll() {
     cities.sort((a, b) => (a.createdAt - b.createdAt) || a.id.localeCompare(b.id));
@@ -3503,7 +3520,12 @@
         <button class="btn btn-ghost" data-w="later">${L('Plus tard', 'Later', {pt: `Depois`, es: `Más tarde`, it: `Più tardi`, de: `Später`})}</button>
         <button class="btn btn-ghost" data-w="place">📍 ${L('Ajouter un lieu', 'Add a place', {pt: `Adicionar um lugar`, es: `Añadir un lugar`, it: `Aggiungi un luogo`, de: `Einen Ort hinzufügen`})}</button>
         <button class="btn btn-primary" data-w="photos">📸 ${L('Commencer avec mes photos', 'Start with my photos', {pt: `Começar com minhas fotos`, es: `Empezar con mis fotos`, it: `Inizia con le mie foto`, de: `Mit meinen Fotos beginnen`})}</button>
-      </div>`);
+      </div>
+      ${syncAvailable() ? `<p class="hint" style="margin-top:14px;text-align:center"><a href="#" id="w-drive">☁️ ${L('J’ai déjà un carnet sur un autre appareil (Google Drive)', 'I already have a journal on another device (Google Drive)', {pt: `Já tenho um diário em outro aparelho (Google Drive)`, es: `Ya tengo un diario en otro dispositivo (Google Drive)`, it: `Ho già un diario su un altro dispositivo (Google Drive)`, de: `Ich habe schon ein Tagebuch auf einem anderen Gerät (Google Drive)`})}</a></p>` : ''}`);
+    if (syncAvailable()) {
+      loadGis().then(() => tokenClient()).catch(() => {});
+      $('w-drive').onclick = e => { e.preventDefault(); settings.welcomed = true; closeDialog(); connectDrive(false); };
+    }
     $('dialog').querySelectorAll('[data-w]').forEach(b => b.onclick = async () => {
       const name = $('w-name').value.trim();
       const ns = { ...settings, welcomed: true };
@@ -3783,6 +3805,263 @@
       </ul>
       <p class="hint" style="margin-top:14px;font-size:.75rem">${L('Crédits', 'Credits', {pt: `Créditos`, es: `Créditos`, it: `Crediti`, de: `Danksagung`})} : ${L('images de la Terre', 'Earth imagery', {pt: `imagens da Terra`, es: `imágenes de la Tierra`, it: `immagini della Terra`, de: `Erdbilder`})} NASA (Blue Marble, Black Marble) · ${L('frontières', 'borders', {pt: `fronteiras`, es: `fronteras`, it: `confini`, de: `Grenzen`})} Natural Earth · ${L('villes', 'cities', {pt: `cidades`, es: `ciudades`, it: `città`, de: `Städte`})} GeoNames (CC BY 4.0) · ${L('moteur 3D', '3D engine', {pt: `motor 3D`, es: `motor 3D`, it: `motore 3D`, de: `3D-Engine`})} three.js (MIT)</p>
       <div class="dialog-actions"><button class="btn btn-primary" onclick="closeDialog()">${L('Compris !', 'Got it!', {pt: `Entendi!`, es: `¡Entendido!`, it: `Capito!`, de: `Verstanden!`})}</button></div>`);
+  }
+
+  // ═════════════════════════════════════════════════════════════════════
+  //  SYNCHRONISATION GOOGLE DRIVE (version installable)
+  //  Chaque utilisateur garde son carnet dans SON Google Drive, dans un
+  //  dossier « Carnet de Voyage 3D » (accès limité aux fichiers créés par l'appli).
+  // ═════════════════════════════════════════════════════════════════════
+  const GD_SCOPES = 'https://www.googleapis.com/auth/drive.file openid email';
+  const GD_API = 'https://www.googleapis.com/drive/v3', GD_UP = 'https://www.googleapis.com/upload/drive/v3';
+  const GD_FOLDER = 'Carnet de Voyage 3D', GD_DATA = 'carnet.json';
+  const syncAvailable = () => mode === 'local' && !!GDRIVE_CLIENT_ID && /^https?:$/.test(location.protocol);
+  const Sync = {
+    on: lsGet('gd-on', '0') === '1',
+    email: lsGet('gd-email', ''),
+    token: null, exp: 0, client: null,
+    folder: lsGet('gd-folder', ''),
+    last: +lsGet('gd-last', '0') || 0,
+    state: 'off', busy: false, again: false, timer: null, index: new Map(), dl: 0, dlQueue: []
+  };
+  try { const t = JSON.parse(localStorage.getItem('gd-token') || 'null'); if (t && t.exp > Date.now() + 60000) { Sync.token = t.v; Sync.exp = t.exp; } } catch (e) {}
+  const tokenOk = () => Sync.token && Date.now() < Sync.exp - 60000;
+  let tombstones = {};
+
+  function loadGis() {
+    if (window.google && google.accounts && google.accounts.oauth2) return Promise.resolve();
+    if (Sync.gisP) return Sync.gisP;
+    Sync.gisP = new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://accounts.google.com/gsi/client'; s.async = true;
+      s.onload = () => res(); s.onerror = () => { Sync.gisP = null; rej(new Error('gis')); };
+      document.head.appendChild(s);
+    });
+    return Sync.gisP;
+  }
+  function tokenClient() {
+    if (Sync.client || !(window.google && google.accounts && google.accounts.oauth2)) return Sync.client;
+    Sync.client = google.accounts.oauth2.initTokenClient({
+      client_id: GDRIVE_CLIENT_ID, scope: GD_SCOPES,
+      callback: r => {
+        if (!r || r.error || !r.access_token) { Sync.pending && Sync.pending.rej(new Error((r && r.error) || 'auth')); Sync.pending = null; return; }
+        Sync.token = r.access_token; Sync.exp = Date.now() + (+r.expires_in || 3600) * 1000;
+        try { localStorage.setItem('gd-token', JSON.stringify({ v: Sync.token, exp: Sync.exp })); } catch (e) {}
+        Sync.pending && Sync.pending.res(Sync.token); Sync.pending = null;
+      },
+      error_callback: err => { Sync.pending && Sync.pending.rej(new Error((err && err.type) || 'popup')); Sync.pending = null; }
+    });
+    return Sync.client;
+  }
+  // À appeler DIRECTEMENT dans un clic (sinon le navigateur bloque la fenêtre Google)
+  function requestToken() {
+    const c = tokenClient();
+    if (!c) return Promise.reject(new Error('gis'));
+    return new Promise((res, rej) => {
+      Sync.pending = { res, rej };
+      c.requestAccessToken({ prompt: Sync.on ? '' : 'consent', hint: Sync.email || undefined });
+    });
+  }
+  async function gfetch(url, opts = {}) {
+    if (!tokenOk()) { const e = new Error('auth'); e.auth = true; throw e; }
+    const r = await fetch(url, { ...opts, headers: { ...(opts.headers || {}), Authorization: 'Bearer ' + Sync.token } });
+    if (r.status === 401) { Sync.token = null; const e = new Error('auth'); e.auth = true; throw e; }
+    if (!r.ok) throw new Error('Drive ' + r.status);
+    return r;
+  }
+  async function gdEnsureFolder() {
+    if (Sync.folder) {
+      try { const r = await gfetch(`${GD_API}/files/${Sync.folder}?fields=id,trashed`); const j = await r.json(); if (!j.trashed) return Sync.folder; }
+      catch (e) { if (e.auth) throw e; }
+    }
+    const q = encodeURIComponent(`name='${GD_FOLDER}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+    const j = await (await gfetch(`${GD_API}/files?q=${q}&fields=files(id)&spaces=drive`)).json();
+    let id = j.files && j.files[0] && j.files[0].id;
+    if (!id) {
+      const r = await gfetch(`${GD_API}/files?fields=id`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: GD_FOLDER, mimeType: 'application/vnd.google-apps.folder' }) });
+      id = (await r.json()).id;
+    }
+    Sync.folder = id; lsSet('gd-folder', id);
+    return id;
+  }
+  async function gdList(folder) {
+    const out = new Map(); let page = '';
+    do {
+      const q = encodeURIComponent(`'${folder}' in parents and trashed=false`);
+      const j = await (await gfetch(`${GD_API}/files?q=${q}&pageSize=1000&fields=nextPageToken,files(id,name,createdTime)${page ? '&pageToken=' + page : ''}`)).json();
+      (j.files || []).forEach(f => out.set(f.name, f));
+      page = j.nextPageToken || '';
+    } while (page);
+    return out;
+  }
+  async function gdUpload(name, blob, folder, existingId) {
+    if (existingId) return (await gfetch(`${GD_UP}/files/${existingId}?uploadType=media&fields=id`, { method: 'PATCH', headers: { 'Content-Type': blob.type || 'application/octet-stream' }, body: blob })).json();
+    const b = 'carnet' + uid();
+    const body = new Blob([`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`, JSON.stringify({ name, parents: [folder] }), `\r\n--${b}\r\nContent-Type: ${blob.type || 'application/octet-stream'}\r\n\r\n`, blob, `\r\n--${b}--`]);
+    return (await gfetch(`${GD_UP}/files?uploadType=multipart&fields=id,name,createdTime`, { method: 'POST', headers: { 'Content-Type': 'multipart/related; boundary=' + b }, body })).json();
+  }
+  // Fusion : pour chaque lieu/voyage, la version modifiée le plus récemment gagne
+  function mergeById(a, b, tomb) {
+    const m = new Map();
+    for (const x of [...a, ...b]) { const o = m.get(x.id); if (!o || (+x.updatedAt || 0) > (+o.updatedAt || 0)) m.set(x.id, x); }
+    return [...m.values()].filter(x => !(tomb[x.id] && tomb[x.id] >= (+x.updatedAt || 0)));
+  }
+  async function syncNow(opts = {}) {
+    if (!syncAvailable() || !Sync.on) return;
+    if (Sync.busy) { Sync.again = true; return; }
+    if (!tokenOk()) { setSyncState('auth'); return; }
+    Sync.busy = true; setSyncState('busy');
+    try {
+      const folder = await gdEnsureFolder();
+      const files = await gdList(folder);
+      Sync.index = files;
+      let remote = null;
+      const df = files.get(GD_DATA);
+      if (df) { try { remote = await (await gfetch(`${GD_API}/files/${df.id}?alt=media`)).json(); } catch (e) { if (e.auth) throw e; } }
+      const first = !Sync.last;
+      if (remote) {
+        const rt = remote.tombstones || {};
+        for (const k in rt) tombstones[k] = Math.max(tombstones[k] || 0, rt[k]);
+        const nc = mergeById((remote.cities || []).map(normalizeCity), cities, tombstones);
+        const nt = mergeById((remote.trips || []).map(normalizeTrip), trips, tombstones);
+        const rs = remote.settings || {};
+        let ns = settings;
+        if (first) ns = { ...settings, ...rs, welcomed: true };
+        else if ((+rs.updatedAt || 0) > (+settings.updatedAt || 0)) ns = rs;
+        const changed = JSON.stringify([nc, nt, ns]) !== JSON.stringify([cities, trips, settings]);
+        if (changed) {
+          const prevMusic = settings.music && settings.music.id;
+          cities = nc; trips = nt; settings = ns; sortAll();
+          await Store.kvSet('cities', cities); await Store.kvSet('trips', trips); await Store.kvSet('settings', settings);
+          if ((settings.music && settings.music.id) !== prevMusic) loadMusic();
+          onDataChanged(); updateBranding(); updateMenu();
+        }
+      }
+      // tombstones de plus de 6 mois : oubliés
+      const old = Date.now() - 180 * 864e5;
+      for (const k in tombstones) if (tombstones[k] < old) delete tombstones[k];
+      await Store.kvSet('tombstones', tombstones);
+      // envoie les photos qui manquent dans le Drive
+      const need = [...usedFileIds()];
+      const todo = [];
+      for (const id of need) if (!files.has(id)) { const blob = await Store.kvGet('photo:' + id); if (blob) todo.push([id, blob]); }
+      let done = 0, failed = 0;
+      const worker = async () => {
+        while (todo.length) {
+          const [id, blob] = todo.shift();
+          try { const f = await gdUpload(id, blob, folder); files.set(id, f); } catch (e) { if (e.auth) throw e; failed++; }
+          done++; if (opts.verbose || done % 10 === 0) setSyncState('busy', `${done}/${done + todo.length}`);
+        }
+      };
+      await Promise.all([worker(), worker(), worker()]);
+      // envoie le carnet fusionné
+      const payload = new Blob([JSON.stringify({ v: 1, app: 'carnet-voyage-3d', updatedAt: Date.now(), cities, trips, settings, tombstones })], { type: 'application/json' });
+      const up = await gdUpload(GD_DATA, payload, folder, df && df.id);
+      if (!df) files.set(GD_DATA, up);
+      // ménage : fichiers du Drive qui ne servent plus (après 24 h, pour ne rien effacer pendant qu'un autre appareil envoie)
+      const used = new Set(need), limit = Date.now() - 864e5;
+      for (const [name, f] of files) {
+        if (name === GD_DATA || used.has(name) || !f.createdTime || Date.parse(f.createdTime) > limit) continue;
+        try { await gfetch(`${GD_API}/files/${f.id}`, { method: 'DELETE' }); files.delete(name); } catch (e) { if (e.auth) throw e; }
+      }
+      Sync.last = Date.now(); lsSet('gd-last', String(Sync.last));
+      setSyncState(failed ? 'error' : 'ok');
+      if (opts.verbose) toast(failed ? L(`☁️ Synchronisé, mais ${failed} photo(s) n'ont pas pu être envoyées (réessaie).`, `☁️ Synced, but ${failed} photo(s) couldn't be uploaded (try again).`, {pt: `☁️ Sincronizado, mas ${failed} foto(s) não puderam ser enviadas (tente de novo).`, es: `☁️ Sincronizado, pero ${failed} foto(s) no se pudieron subir (inténtalo de nuevo).`, it: `☁️ Sincronizzato, ma ${failed} foto non sono state caricate (riprova).`, de: `☁️ Synchronisiert, aber ${failed} Foto(s) konnten nicht hochgeladen werden (erneut versuchen).`}) : L('☁️ Carnet synchronisé', '☁️ Journal synced', {pt: `☁️ Diário sincronizado`, es: `☁️ Diario sincronizado`, it: `☁️ Diario sincronizzato`, de: `☁️ Tagebuch synchronisiert`}));
+      if (first) hydrate(document.body);
+    } catch (e) {
+      console.warn(e);
+      if (e.auth) setSyncState('auth');
+      else { setSyncState('error'); if (opts.verbose) toast(L('☁️ La synchronisation a échoué. Vérifie ta connexion.', '☁️ Sync failed. Check your connection.', {pt: `☁️ A sincronização falhou. Verifique sua conexão.`, es: `☁️ La sincronización falló. Comprueba tu conexión.`, it: `☁️ Sincronizzazione non riuscita. Controlla la connessione.`, de: `☁️ Synchronisierung fehlgeschlagen. Prüfe deine Verbindung.`})); }
+    } finally {
+      Sync.busy = false;
+      if (Sync.again) { Sync.again = false; scheduleSync(1500); }
+      if ($('overlay').classList.contains('open') && $('sync-box')) renderSyncBox();
+    }
+  }
+  function scheduleSync(ms = 4000) {
+    if (!syncAvailable() || !Sync.on) return;
+    clearTimeout(Sync.timer);
+    if (!tokenOk()) { setSyncState('auth'); return; }
+    setSyncState('pending');
+    Sync.timer = setTimeout(() => syncNow(), ms);
+  }
+  function markChanged(kind, id, deleted) {
+    if (deleted && id) { tombstones[id] = Date.now(); Store.kvSet('tombstones', tombstones); }
+    scheduleSync();
+  }
+  // Photo absente de cet appareil : on la récupère dans le Drive au moment de l'afficher
+  async function driveFetchBlob(id) {
+    if (!syncAvailable() || !Sync.on || !tokenOk()) return null;
+    const f = Sync.index.get(id);
+    if (!f) return null;
+    while (Sync.dl >= 4) await new Promise(r => Sync.dlQueue.push(r));
+    Sync.dl++;
+    try { const blob = await (await gfetch(`${GD_API}/files/${f.id}?alt=media`)).blob(); await Store.kvSet('photo:' + id, blob); return blob; }
+    catch (e) { return null; }
+    finally { Sync.dl--; const n = Sync.dlQueue.shift(); if (n) n(); }
+  }
+  function setSyncState(s, extra) {
+    Sync.state = s;
+    const el = $('sync-state');
+    if (!el) return;
+    el.classList.toggle('hidden', !(syncAvailable() && Sync.on));
+    el.className = 'sync-state s-' + s + ((syncAvailable() && Sync.on) ? '' : ' hidden');
+    el.textContent = s === 'auth' ? '☁️ ' + L('Toucher pour synchroniser', 'Tap to sync', {pt: `Toque para sincronizar`, es: `Toca para sincronizar`, it: `Tocca per sincronizzare`, de: `Tippen zum Synchronisieren`}) : s === 'busy' ? '☁️ ' + (extra || '…') : s === 'error' ? '☁️ ⚠️' : '☁️';
+    el.title = { ok: L('Synchronisé avec Google Drive', 'Synced with Google Drive', {pt: `Sincronizado com o Google Drive`, es: `Sincronizado con Google Drive`, it: `Sincronizzato con Google Drive`, de: `Mit Google Drive synchronisiert`}), busy: L('Synchronisation…', 'Syncing…', {pt: `Sincronizando…`, es: `Sincronizando…`, it: `Sincronizzazione…`, de: `Synchronisiere …`}), pending: L('Synchronisation bientôt…', 'Sync pending…', {pt: `Sincronização em breve…`, es: `Sincronización pendiente…`, it: `Sincronizzazione in attesa…`, de: `Synchronisierung ausstehend …`}), auth: L('Toucher pour te reconnecter à Google Drive', 'Tap to reconnect to Google Drive', {pt: `Toque para reconectar ao Google Drive`, es: `Toca para volver a conectar con Google Drive`, it: `Tocca per riconnetterti a Google Drive`, de: `Tippen, um dich wieder mit Google Drive zu verbinden`}), error: L('Problème de synchronisation', 'Sync problem', {pt: `Problema de sincronização`, es: `Problema de sincronización`, it: `Problema di sincronizzazione`, de: `Synchronisierungsproblem`}) }[s] || '';
+    const mi = $('menu-sync'); if (mi) mi.classList.toggle('hidden', !syncAvailable());
+  }
+  function onSyncChip() {
+    if (Sync.state === 'auth') return connectDrive(false);
+    openSyncDialog();
+  }
+  // Clic sur « Se connecter » : la fenêtre Google s'ouvre tout de suite
+  function connectDrive(fromDialog) {
+    if (!tokenClient()) { toast(L('Connexion à Google impossible pour le moment. Vérifie ta connexion.', "Can't reach Google right now. Check your connection.", {pt: `Não foi possível conectar ao Google agora. Verifique sua conexão.`, es: `No se puede conectar con Google ahora. Comprueba tu conexión.`, it: `Impossibile raggiungere Google ora. Controlla la connessione.`, de: `Google ist gerade nicht erreichbar. Prüfe deine Verbindung.`})); loadGis().catch(() => {}); return; }
+    requestToken().then(async () => {
+      const wasOn = Sync.on;
+      Sync.on = true; lsSet('gd-on', '1');
+      try { const u = await (await gfetch('https://www.googleapis.com/oauth2/v3/userinfo')).json(); if (u.email) { Sync.email = u.email; lsSet('gd-email', u.email); } } catch (e) {}
+      if (!wasOn) { Sync.last = 0; lsSet('gd-last', '0'); }
+      if (fromDialog || $('sync-box')) renderSyncBox();
+      await syncNow({ verbose: true });
+    }).catch(e => { console.warn(e); toast(L('Connexion à Google annulée.', 'Google sign-in cancelled.', {pt: `Login no Google cancelado.`, es: `Inicio de sesión con Google cancelado.`, it: `Accesso a Google annullato.`, de: `Google-Anmeldung abgebrochen.`})); });
+  }
+  function disconnectDrive() {
+    try { if (Sync.token && window.google && google.accounts.oauth2.revoke) google.accounts.oauth2.revoke(Sync.token, () => {}); } catch (e) {}
+    Sync.on = false; Sync.token = null; Sync.folder = ''; Sync.last = 0;
+    ['gd-on', 'gd-folder', 'gd-last'].forEach(k => lsSet(k, k === 'gd-on' ? '0' : ''));
+    try { localStorage.removeItem('gd-token'); } catch (e) {}
+    setSyncState('off'); renderSyncBox();
+    toast(L('☁️ Synchronisation désactivée sur cet appareil (ton carnet reste ici et dans ton Drive).', '☁️ Sync turned off on this device (your journal stays here and in your Drive).', {pt: `☁️ Sincronização desativada neste aparelho (seu diário continua aqui e no seu Drive).`, es: `☁️ Sincronización desactivada en este dispositivo (tu diario sigue aquí y en tu Drive).`, it: `☁️ Sincronizzazione disattivata su questo dispositivo (il diario resta qui e nel tuo Drive).`, de: `☁️ Synchronisierung auf diesem Gerät aus (dein Tagebuch bleibt hier und in deinem Drive).`}), 5000);
+  }
+  function renderSyncBox() {
+    const box = $('sync-box'); if (!box) return;
+    const ago = Sync.last ? new Date(Sync.last).toLocaleString(LOCALES[LANG], { dateStyle: 'short', timeStyle: 'short' }) : '—';
+    box.innerHTML = Sync.on ? `
+      <p class="hint">✅ ${L('Connecté à Google Drive', 'Connected to Google Drive', {pt: `Conectado ao Google Drive`, es: `Conectado a Google Drive`, it: `Connesso a Google Drive`, de: `Mit Google Drive verbunden`})}${Sync.email ? ' : <b>' + esc(Sync.email) + '</b>' : ''}<br>${L('Dernière synchronisation', 'Last sync', {pt: `Última sincronização`, es: `Última sincronización`, it: `Ultima sincronizzazione`, de: `Letzte Synchronisierung`})} : ${esc(ago)}</p>
+      <div class="dialog-actions" style="flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="disconnectDrive()">${L('Se déconnecter', 'Sign out', {pt: `Sair`, es: `Cerrar sesión`, it: `Esci`, de: `Abmelden`})}</button>
+        <button class="btn btn-primary" onclick="${tokenOk() ? 'syncNow({verbose:true})' : 'connectDrive(true)'}">🔄 ${L('Synchroniser maintenant', 'Sync now', {pt: `Sincronizar agora`, es: `Sincronizar ahora`, it: `Sincronizza ora`, de: `Jetzt synchronisieren`})}</button>
+      </div>` : `
+      <div class="dialog-actions"><button class="btn btn-ghost" onclick="closeDialog()">${L('Plus tard', 'Later', {pt: `Depois`, es: `Más tarde`, it: `Più tardi`, de: `Später`})}</button><button class="btn btn-primary" onclick="connectDrive(true)">🔐 ${L('Se connecter avec Google', 'Sign in with Google', {pt: `Entrar com o Google`, es: `Iniciar sesión con Google`, it: `Accedi con Google`, de: `Mit Google anmelden`})}</button></div>`;
+  }
+  function openSyncDialog() {
+    if (!syncAvailable()) return;
+    loadGis().then(() => tokenClient()).catch(() => {});
+    openDialog(`
+      <h2>☁️ ${L('Synchroniser avec Google Drive', 'Sync with Google Drive', {pt: `Sincronizar com o Google Drive`, es: `Sincronizar con Google Drive`, it: `Sincronizza con Google Drive`, de: `Mit Google Drive synchronisieren`})}</h2>
+      <p class="hint">${L('Retrouve le même carnet sur ton téléphone et ton ordinateur : connecte-toi avec le même compte Google sur chaque appareil. Tes lieux et tes photos sont rangés dans <b>ton</b> Google Drive, dans un dossier « Carnet de Voyage 3D ». L’application ne voit que ce dossier, rien d’autre.', 'Get the same journal on your phone and your computer: sign in with the same Google account on each device. Your places and photos are stored in <b>your</b> Google Drive, in a “Carnet de Voyage 3D” folder. The app only sees that folder, nothing else.', {pt: `Tenha o mesmo diário no celular e no computador: entre com a mesma conta Google em cada aparelho. Seus lugares e fotos ficam no <b>seu</b> Google Drive, numa pasta “Carnet de Voyage 3D”. O app só vê essa pasta, nada mais.`, es: `Ten el mismo diario en tu móvil y tu ordenador: inicia sesión con la misma cuenta de Google en cada dispositivo. Tus lugares y fotos se guardan en <b>tu</b> Google Drive, en una carpeta “Carnet de Voyage 3D”. La app solo ve esa carpeta, nada más.`, it: `Ritrova lo stesso diario sul telefono e sul computer: accedi con lo stesso account Google su ogni dispositivo. I tuoi luoghi e le tue foto sono salvati nel <b>tuo</b> Google Drive, in una cartella “Carnet de Voyage 3D”. L'app vede solo quella cartella, nient'altro.`, de: `Dasselbe Tagebuch auf Handy und Computer: Melde dich auf jedem Gerät mit demselben Google-Konto an. Deine Orte und Fotos liegen in <b>deinem</b> Google Drive, in einem Ordner „Carnet de Voyage 3D“. Die App sieht nur diesen Ordner, sonst nichts.`})}</p>
+      <div id="sync-box"></div>`);
+    renderSyncBox();
+  }
+  function initSync() {
+    const mi = $('menu-sync'); if (mi) mi.classList.toggle('hidden', !syncAvailable());
+    if (!syncAvailable()) return;
+    if (Sync.on) {
+      loadGis().then(() => tokenClient()).catch(() => {});
+      if (tokenOk()) syncNow(); else setSyncState('auth');
+    }
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && Sync.on && Date.now() - Sync.last > 60000) { if (tokenOk()) syncNow(); else setSyncState('auth'); } });
   }
 
   // ═════════════════════════════════════════════════════════════════════
@@ -4085,6 +4364,7 @@
     updateStats(); updateCaption(); updateMenu();
     $('loading').classList.add('done');
     controls.autoRotate = true;
+    initSync();
     if (mode === 'local' && !cities.length && !settings.welcomed) openWelcome();
     else if (shouldShowIntro()) openIntro();
     loadMusic();
