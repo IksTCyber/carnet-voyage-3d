@@ -16,7 +16,7 @@
   <title data-app>Mon Carnet de Voyage 3D</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" data-app>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin data-app>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" data-app>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" data-app>
   <style data-app>
     :root {
       --ink: #1a1a1a; --muted: #6b6259; --paper: #fbf7f1;
@@ -532,8 +532,6 @@
     }
   </style>
 
-  <script src="three.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" data-app></script>
-  <script src="OrbitControls.js" data-cdn="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js" data-app></script>
 </head>
 <body>
 <div id="app-root">
@@ -736,6 +734,8 @@
   <input type="file" id="import-file" accept=".json,application/json" class="hidden" onchange="importData(event)">
 </div>
 
+  <script src="three.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" data-app></script>
+  <script src="OrbitControls.js" data-cdn="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js" data-app></script>
   <script data-app>
   /*APP-START*/
   // ═════════════════════════════════════════════════════════════════════
@@ -744,7 +744,7 @@
   const APP_SOURCE = (() => {
     try {
       return {
-        head: [...document.head.querySelectorAll('[data-app]')].map(n => n.dataset.cdn ? n.outerHTML.replace(n.getAttribute('src'), n.dataset.cdn) : n.outerHTML).join('\n'),
+        head: [...document.head.querySelectorAll('[data-app]'), ...document.querySelectorAll('body script[src][data-app]')].map(n => n.dataset.cdn ? n.outerHTML.replace(n.getAttribute('src'), n.dataset.cdn) : n.outerHTML).join('\n'),
         body: document.getElementById('app-root').outerHTML,
         script: document.currentScript ? document.currentScript.textContent : ''
       };
@@ -1168,7 +1168,7 @@
   const isPhone = Math.min(screen.width, screen.height) < 700;
   const liteSetting = lsGet('lite-mode', 'auto');
   const crashedLastTime = lsGet('boot-pending', '0') === '1';
-  const weakDevice = isPhone && ((navigator.deviceMemory && navigator.deviceMemory <= 4) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4));
+  const weakDevice = isPhone && (/SamsungBrowser/i.test(navigator.userAgent) || (navigator.deviceMemory && navigator.deviceMemory <= 4) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4));
   const LITE = liteSetting === 'on' || (liteSetting === 'auto' && (weakDevice || crashedLastTime));
   const liteAuto = LITE && liteSetting !== 'on';
   if (liteSetting === 'auto' && crashedLastTime) lsSet('lite-mode', 'on');
