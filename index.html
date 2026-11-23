@@ -199,6 +199,9 @@
     .card-note.placeholder { color: #a39a90; font-style: italic; }
     .section-title { margin: 16px 0 8px; font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #8a8077; }
     .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .visit-head { font-weight: 600; font-size: .85rem; margin: 12px 0 6px; color: var(--ink); }
+    .visit-head small { font-weight: 400; color: var(--muted, #7a6f64); }
+    .visit-head:first-of-type { margin-top: 4px; }
     .photo-grid .ph { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: #e8e0d4; border: none; padding: 0; cursor: pointer; }
     .photo-grid .ph img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .25s; }
     .photo-grid .ph:hover img { transform: scale(1.05); }
@@ -1742,6 +1745,20 @@
     cardMode = null; currentId = null;
     highlightCurrent(); updateCaption(); pauseAutoRotate();
   }
+  function visitsOf(c) {
+    const dated = c.photos.map((p, i) => ({ i, d: (p.takenAt || '').slice(0, 10) })).filter(x => /^\d{4}-\d{2}/.test(x.d)).sort((a, b) => a.d.localeCompare(b.d));
+    const groups = [];
+    let cur = null, prev = 0;
+    for (const x of dated) {
+      const t = Date.parse(x.d.length === 7 ? x.d + '-01' : x.d);
+      if (!cur || t - prev > 10 * 864e5) { cur = { idx: [], first: x.d, last: x.d, dated: true }; groups.push(cur); }
+      cur.idx.push(x.i); cur.last = x.d; prev = t;
+    }
+    const undated = c.photos.map((p, i) => i).filter(i => !dated.some(x => x.i === i));
+    if (undated.length) groups.push({ idx: undated, dated: false });
+    groups.forEach(g => g.label = !g.dated ? L('Sans date', 'No date', {pt: `Sem data`, es: `Sin fecha`, it: `Senza data`, de: `Ohne Datum`}) : g.first.slice(0, 7) === g.last.slice(0, 7) ? formatDate(g.first.slice(0, 7)) : formatRange(g.first.slice(0, 7), g.last.slice(0, 7)));
+    return groups;
+  }
   function renderCard() {
     if (!cardMode) return;
     if (cardMode.type === 'trip') return renderTripCard();
@@ -1751,13 +1768,19 @@
     const cover = coverPhoto(c);
     const editable = canWrite, upl = editable && canUpload;
     const fileInput = `<input class="file-hit" type="file" accept="image/*,video/*" multiple onchange="onMediaPicked(event)" aria-label="${L('Ajouter des photos ou vidéos', 'Add photos or videos', {pt: `Adicionar fotos ou vídeos`, es: `Añadir fotos o vídeos`, it: `Aggiungi foto o video`, de: `Fotos oder Videos hinzufügen`})}">`;
-    const media = c.photos.map((p, i) => `
+    const tile = (p, i) => `
       <div class="ph" role="button" tabindex="0" onclick="openLightbox('${c.id}', ${i})" title="${esc(p.caption || (isVideo(p) ? L('Voir la vidéo', 'Watch the video', {pt: `Ver o vídeo`, es: `Ver el vídeo`, it: `Guarda il video`, de: `Video ansehen`}) : L('Voir la photo', 'View the photo', {pt: `Ver a foto`, es: `Ver la foto`, it: `Vedi la foto`, de: `Foto ansehen`})))}">
         <img data-pid="${esc(thumbId(p))}" alt="" loading="lazy">
         ${isVideo(p) ? '<span class="vid">▶</span>' : ''}
         ${cover && p.id === cover.id && c.photos.length > 1 ? '<span class="star">⭐</span>' : ''}
         ${editable ? `<button class="ph-del" title="${L('Supprimer', 'Delete', {pt: `Excluir`, es: `Eliminar`, it: `Elimina`, de: `Löschen`})}" onclick="event.stopPropagation(); removeMedia('${c.id}', '${esc(p.id)}')">🗑️</button>` : ''}
-      </div>`).join('');
+      </div>`;
+    // Plusieurs séjours au même endroit : les photos sont regroupées par séjour (plus de 10 jours d'écart = nouveau séjour)
+    const visits = visitsOf(c);
+    const addTile = upl ? `<label class="add-tile" title="${L('Ajouter des photos ou vidéos', 'Add photos or videos', {pt: `Adicionar fotos ou vídeos`, es: `Añadir fotos o vídeos`, it: `Aggiungi foto o video`, de: `Fotos oder Videos hinzufügen`})}"><span>＋</span>${L('Ajouter', 'Add', {pt: `Adicionar`, es: `Añadir`, it: `Aggiungi`, de: `Hinzufügen`})}${fileInput}</label>` : '';
+    const media = visits.length < 2 ? `<div class="photo-grid">${c.photos.map(tile).join('')}${addTile}</div>`
+      : visits.map(v => `<div class="visit-head">📅 ${esc(v.label)} <small>· ${plural(v.idx.length, 'photo', 'photos', 'photo', 'photos', {pt: ['foto', 'fotos'], es: ['foto', 'fotos'], it: ['foto', 'foto'], de: ['Foto', 'Fotos']})}</small></div><div class="photo-grid">${v.idx.map(i => tile(c.photos[i], i)).join('')}</div>`).join('') + (addTile ? `<div class="photo-grid" style="margin-top:6px">${addTile}</div>` : '');
+    const nVisits = visits.filter(v => v.dated).length;
     const tps = tripsOf(c.id);
     card.innerHTML = `
       <div class="card-cover immersive ${cover ? '' : 'no-photo'}" ${cover ? `onclick="openLightbox('${c.id}', ${c.photos.indexOf(cover)})"` : ''}>
@@ -1773,6 +1796,7 @@
         <div class="card-toprow">
           <span class="chip-status ${c.status}">${STATUS[c.status].label}</span>
           ${c.photos.length ? `<span class="muted-small">📷 ${c.photos.length}</span>` : ''}
+          ${nVisits > 1 ? `<span class="muted-small">🗓️ ${plural(nVisits, 'séjour', 'séjours', 'visit', 'visits', {pt: ['visita', 'visitas'], es: ['visita', 'visitas'], it: ['visita', 'visite'], de: ['Besuch', 'Besuche']})}</span>` : ''}
           <span style="flex:1"></span>
           <button class="round-btn" onclick="makePostcard({ cityId: '${c.id}' })" title="${L('Créer une carte postale à partager', 'Create a postcard to share', {pt: `Criar um cartão-postal para compartilhar`, es: `Crear una postal para compartir`, it: `Crea una cartolina da condividere`, de: `Eine Postkarte zum Teilen erstellen`})}">📮</button>
           <button class="round-btn" onclick="prevCity()" title="${L('Lieu précédent', 'Previous place', {pt: `Lugar anterior`, es: `Lugar anterior`, it: `Luogo precedente`, de: `Vorheriger Ort`})}">‹</button>
@@ -1782,10 +1806,7 @@
         ${tps.length ? `<div class="trip-chips">${tps.map(t => `<span class="trip-chip-wrap"><button class="trip-chip" onclick="openTrip('${t.id}')">🧳 ${esc(t.name)}</button>${editable ? `<button class="trip-unlink" title="${L('Retirer ce lieu du voyage', 'Remove this place from the trip', {pt: `Tirar este lugar da viagem`, es: `Quitar este lugar del viaje`, it: `Togli questo luogo dal viaggio`, de: `Diesen Ort aus der Reise entfernen`})} « ${esc(t.name)} »" onclick="unlinkFromTrip('${t.id}', '${c.id}')">✕</button>` : ''}</span>`).join('')}</div>` : ''}
         ${c.note ? `<div class="card-note">${esc(c.note)}</div>` : editable ? `<div class="card-note placeholder">${L('Pas encore de récit. Clique sur « Modifier » pour raconter ce voyage.', 'No story yet. Click “Edit” to tell about this trip.', {pt: `Nenhuma história ainda. Toque em “Editar” para contar esta viagem.`, es: `Aún no hay historia. Pulsa “Editar” para contar este viaje.`, it: `Ancora nessun racconto. Tocca “Modifica” per raccontare questo viaggio.`, de: `Noch keine Geschichte. Tippe auf „Bearbeiten“, um von dieser Reise zu erzählen.`})}</div>` : ''}
         <div class="section-title">${L('Photos et vidéos', 'Photos and videos', {pt: `Fotos e vídeos`, es: `Fotos y vídeos`, it: `Foto e video`, de: `Fotos und Videos`})} (${c.photos.length})</div>
-        <div class="photo-grid">
-          ${media}
-          ${upl ? `<label class="add-tile" title="${L('Ajouter des photos ou vidéos', 'Add photos or videos', {pt: `Adicionar fotos ou vídeos`, es: `Añadir fotos o vídeos`, it: `Aggiungi foto o video`, de: `Fotos oder Videos hinzufügen`})}"><span>＋</span>${L('Ajouter', 'Add', {pt: `Adicionar`, es: `Añadir`, it: `Aggiungi`, de: `Hinzufügen`})}${fileInput}</label>` : ''}
-        </div>
+        ${media}
         ${uploadState && uploadState.id === c.id ? `<div class="upload-progress">⏳ ${esc(uploadState.text)}</div>` : ''}
         ${!c.photos.length && !upl ? `<div class="empty">${L('Aucune photo pour ce lieu.', 'No photos for this place.', {pt: `Nenhuma foto para este lugar.`, es: `No hay fotos de este lugar.`, it: `Nessuna foto per questo luogo.`, de: `Keine Fotos für diesen Ort.`})}</div>` : ''}
         ${editable && !canUpload && mode === 'cloud' ? `<div class="empty" style="margin-top:8px">📷 ${L("L'ajout de photos n'est pas disponible dans cette vue. Ouvre le lien du carnet dans Chrome ou Safari (connecté à Claude).", 'Adding photos is not available in this view. Open the journal link in Chrome or Safari (signed in to Claude).', {pt: `Adicionar fotos não está disponível nesta visualização. Abra o link no Chrome ou no Safari.`, es: `No se pueden añadir fotos en esta vista. Abre el enlace en Chrome o Safari.`, it: `L'aggiunta di foto non è disponibile in questa vista. Apri il link in Chrome o Safari.`, de: `Fotos hinzufügen ist in dieser Ansicht nicht möglich. Öffne den Link in Chrome oder Safari.`})}</div>` : ''}
@@ -2308,43 +2329,43 @@ Curaçao/Curacao/Kòrsou|CW|12.17|-69.0
 Aruba|AW|12.52|-69.97
 Saint-Martin/Sint Maarten/Saint Martin|MF|18.07|-63.05
 Saint-Barthélemy/St Barths/Saint Barthelemy|BL|17.9|-62.83
-Martinique|MQ|14.64|-61.02
-Guadeloupe|GP|16.25|-61.58
+Martinique|MQ|14.64|-61.02|40
+Guadeloupe|GP|16.25|-61.58|50
 Marie-Galante|GP|15.93|-61.27
 Les Saintes/Iles des Saintes|GP|15.86|-61.6
-La Réunion/Reunion/Île de la Réunion|RE|-21.12|55.53
+La Réunion/Reunion/Île de la Réunion|RE|-21.12|55.53|45
 Mayotte|YT|-12.83|45.15
 Tahiti|PF|-17.65|-149.43
 Moorea/Mooréa|PF|-17.53|-149.83
 Bora-Bora/Bora Bora|PF|-16.5|-151.74
-Île Maurice/Mauritius/Ile Maurice|MU|-20.25|57.55
-Mahé/Mahe|SC|-4.68|55.48
+Île Maurice/Mauritius/Ile Maurice|MU|-20.25|57.55|40
+Mahé/Mahe|SC|-4.68|55.48|20
 Praslin|SC|-4.33|55.73
 La Digue|SC|-4.36|55.84
 Maldives|MV|3.2|73.22
-Zanzibar|TZ|-6.13|39.31
+Zanzibar|TZ|-6.13|39.31|50
 Nosy Be/Nosy-Be|MG|-13.33|48.27
-Bali|ID|-8.34|115.09
-Lombok|ID|-8.65|116.32
+Bali|ID|-8.34|115.09|70
+Lombok|ID|-8.65|116.32|50
 Gili Trawangan/Îles Gili/Gili Islands|ID|-8.35|116.04
 Komodo|ID|-8.55|119.48
-Phuket|TH|7.88|98.39
+Phuket|TH|7.88|98.39|30
 Koh Samui/Ko Samui|TH|9.51|100.01
 Koh Phi Phi/Ko Phi Phi/Phi Phi|TH|7.74|98.77
 Koh Lanta/Ko Lanta|TH|7.62|99.04
 Koh Tao/Ko Tao|TH|10.09|99.84
 Langkawi|MY|6.35|99.8
-Palawan|PH|9.83|118.74
+Palawan|PH|9.83|118.74|200
 Boracay|PH|11.97|121.92
 Siargao|PH|9.85|126.05
 Baie d'Halong/Ha Long Bay/Halong Bay/Vịnh Hạ Long|VN|20.91|107.18
 Phú Quốc/Phu Quoc|VN|10.23|103.96
-Okinawa|JP|26.33|127.8
-Big Island/Île d'Hawaï/Hawaii Island|US|19.6|-155.5
-Oahu/O'ahu|US|21.47|-157.98
-Maui|US|20.8|-156.33
-Kauai/Kaua'i|US|22.06|-159.5
-Îles Galápagos/Galapagos Islands/Galápagos/Islas Galápagos|EC|-0.95|-90.97
+Okinawa|JP|26.33|127.8|60
+Big Island/Île d'Hawaï/Hawaii Island|US|19.6|-155.5|80
+Oahu/O'ahu|US|21.47|-157.98|40
+Maui|US|20.8|-156.33|45
+Kauai/Kaua'i|US|22.06|-159.5|35
+Îles Galápagos/Galapagos Islands/Galápagos/Islas Galápagos|EC|-0.95|-90.97|150
 Île de Pâques/Easter Island/Rapa Nui/Isla de Pascua|CL|-27.12|-109.35
 Cozumel|MX|20.42|-86.92
 Isla Mujeres|MX|21.23|-86.73
@@ -2354,26 +2375,26 @@ San Andrés/San Andres|CO|12.55|-81.72
 Isla Margarita/Margarita|VE|11.0|-63.92
 Fernando de Noronha|BR|-3.85|-32.42
 Ilha Grande|BR|-23.15|-44.23
-Corse/Corsica/Córcega/Korsika|FR|42.15|9.1
-Sardaigne/Sardinia/Sardegna/Cerdeña/Sardinien|IT|40.12|9.01
-Sicile/Sicily/Sicilia/Sizilien|IT|37.6|14.02
+Corse/Corsica/Córcega/Korsika|FR|42.15|9.1|90
+Sardaigne/Sardinia/Sardegna/Cerdeña/Sardinien|IT|40.12|9.01|140
+Sicile/Sicily/Sicilia/Sizilien|IT|37.6|14.02|150
 Capri|IT|40.55|14.24
 Ischia|IT|40.73|13.9
 Île d'Elbe/Elba/Isola d'Elba|IT|42.78|10.27
-Majorque/Mallorca/Majorca/Mallorca|ES|39.62|2.98
+Majorque/Mallorca/Majorca/Mallorca|ES|39.62|2.98|50
 Minorque/Menorca/Minorca|ES|39.95|4.08
 Ibiza/Eivissa|ES|38.98|1.43
 Formentera|ES|38.7|1.45
-Tenerife/Ténérife/Teneriffa|ES|28.29|-16.63
-Gran Canaria/Grande Canarie|ES|27.96|-15.59
-Lanzarote|ES|29.04|-13.63
-Fuerteventura|ES|28.36|-14.05
+Tenerife/Ténérife/Teneriffa|ES|28.29|-16.63|45
+Gran Canaria/Grande Canarie|ES|27.96|-15.59|40
+Lanzarote|ES|29.04|-13.63|40
+Fuerteventura|ES|28.36|-14.05|60
 La Palma|ES|28.68|-17.85
-Madère/Madeira|PT|32.75|-16.96
-Açores/Azores|PT|37.78|-25.5
+Madère/Madeira|PT|32.75|-16.96|40
+Açores/Azores|PT|37.78|-25.5|200
 Santorin/Santorini/Thira|GR|36.39|25.46
 Mykonos|GR|37.45|25.33
-Crète/Crete/Kreta/Creta|GR|35.24|24.81
+Crète/Crete/Kreta/Creta|GR|35.24|24.81|130
 Corfou/Corfu/Kerkyra/Korfu|GR|39.62|19.92
 Zante/Zakynthos|GR|37.79|20.9
 Naxos|GR|37.05|25.48
@@ -2389,27 +2410,27 @@ Noirmoutier|FR|46.99|-2.25
 Porquerolles|FR|43.0|6.2
 Île de Bréhat/Brehat|FR|48.85|-3.0
 Mont-Saint-Michel/Mont Saint Michel|FR|48.636|-1.511
-Île de Skye/Isle of Skye/Skye|GB|57.3|-6.2
+Île de Skye/Isle of Skye/Skye|GB|57.3|-6.2|50
 Île de Wight/Isle of Wight|GB|50.69|-1.3
 Jersey|JE|49.21|-2.13
 Guernesey/Guernsey|GG|49.45|-2.58
 Îles d'Aran/Aran Islands|IE|53.12|-9.7
-Lofoten/Îles Lofoten|NO|68.21|13.86
-Svalbard/Spitzberg|SJ|78.22|15.65
-Îles Féroé/Faroe Islands/Føroyar|FO|62.0|-6.8
-Gotland|SE|57.47|18.49
+Lofoten/Îles Lofoten|NO|68.21|13.86|80
+Svalbard/Spitzberg|SJ|78.22|15.65|120
+Îles Féroé/Faroe Islands/Føroyar|FO|62.0|-6.8|80
+Gotland|SE|57.47|18.49|70
 Bornholm|DK|55.12|14.92
-Hvar|HR|43.17|16.44
-Brač/Brac|HR|43.33|16.63
-Krk|HR|45.08|14.59
-Korčula/Korcula|HR|42.96|17.13
+Hvar|HR|43.17|16.44|40
+Brač/Brac|HR|43.33|16.63|25
+Krk|HR|45.08|14.59|30
+Korčula/Korcula|HR|42.96|17.13|30
 Machu Picchu|PE|-13.163|-72.545
 Grand Canyon|US|36.1|-112.11
 Yellowstone|US|44.43|-110.59
 Yosemite|US|37.75|-119.59
 Monument Valley|US|36.98|-110.11
 Uluru/Ayers Rock|AU|-25.344|131.036
-Grande Barrière de corail/Great Barrier Reef|AU|-18.29|147.7
+Grande Barrière de corail/Great Barrier Reef|AU|-18.29|147.7|300
 Chutes Victoria/Victoria Falls|ZW|-17.92|25.86
 Chutes d'Iguazú/Iguazu Falls/Cataratas do Iguaçu|AR|-25.69|-54.44
 Pétra/Petra|JO|30.33|35.44
@@ -2454,7 +2475,7 @@ Bonito|BR|-21.13|-56.48
 Jericoacoara|BR|-2.79|-40.51
 Morro de São Paulo/Morro de Sao Paulo|BR|-13.38|-38.91
 Ilha Bela/Ilhabela|BR|-23.78|-45.36
-Pantanal|BR|-17.6|-57.0`.split('\n').map(l => { const [names, c, la, ln] = l.split('|'); const ns = names.split('/'); return { ns, ks: ns.map(norm), c, la: +la, ln: +ln, p: 0, spot: true }; });
+Pantanal|BR|-17.6|-57.0`.split('\n').map(l => { const [names, c, la, ln, rk] = l.split('|'); const ns = names.split('/'); return { ns, ks: ns.map(norm), c, la: +la, ln: +ln, rk: +rk || 40, p: 0, spot: true }; });
   let countryTop = null;
   const enRegion = (() => { try { return new Intl.DisplayNames(['en'], { type: 'region' }); } catch (e) { return null; } })();
   function searchPlaces(query) {
@@ -2471,12 +2492,18 @@ Pantanal|BR|-17.6|-57.0`.split('\n').map(l => { const [names, c, la, ln] = l.spl
       }
     }
     // îles et sites touristiques
+    let spotCount = 0;
     const spotRank = s => s.ks.some(k => k === q) ? 0 : s.ks.some(k => k.startsWith(q)) ? 1 : 2;
     if (q.length >= 3) for (const s of SPOTS.filter(s => s.ks.some(k => k.startsWith(q) || k.includes(' ' + q) || k.includes('-' + q))).sort((a, b) => spotRank(a) - spotRank(b))) {
       const i = s.ks.findIndex(k => k.startsWith(q) || k.includes(' ' + q) || k.includes('-' + q));
       if (i < 0) continue;
       const name = (LANG === 'fr' ? s.ns[0] : s.ns.find((n, j) => j > 0 && !/[éèêàçîôû]/i.test(n)) || s.ns[0]);
       push({ n: name, c: s.c, la: s.la, ln: s.ln, p: 0, k: s.ks[0], spot: true }, i > 0 && s.ks[i] !== norm(name) ? s.ns[i] : name);
+      // les villes de l'île (ou autour du site), des plus grandes aux plus petites
+      if (++spotCount <= 2) {
+        const cos = Math.cos(s.la * Math.PI / 180);
+        cityIndex.filter(r => r.c === s.c && Math.hypot((r.ln - s.ln) * cos, r.la - s.la) * 111 < s.rk).slice(0, 5).forEach(r => push({ ...r, near: name }));
+      }
     }
     // nom de pays ou de territoire : ses principales villes
     if (q.length >= 3) {
@@ -2520,7 +2547,7 @@ Pantanal|BR|-17.6|-57.0`.split('\n').map(l => { const [names, c, la, ln] = l.spl
       $('add-results').innerHTML = results.length
         ? results.map((r, i) => `<button class="result ${i === kbd ? 'kbd' : ''}" data-i="${i}">
             <span>${esc(r.display)}${r.display !== r.n ? ` <small>(${esc(r.n)})</small>` : ''}</span>
-            <small>${r.spot ? '📍 ' : ''}${esc(countryName(r.c))}${r.p >= 1000 ? ` · ${r.p >= 1e6 ? (r.p / 1e6).toFixed(1).replace('.', L(',', '.', {pt: `.`, es: `.`, it: `.`, de: `.`})) + ' M' : Math.round(r.p / 1000) + ' k'} ${L('hab.', 'pop.', {pt: `hab.`, es: `hab.`, it: `ab.`, de: `Einw.`})}` : ''}</small></button>`).join('')
+            <small>${r.spot ? '📍 ' : ''}${r.near ? esc(r.near) + ' · ' : ''}${esc(countryName(r.c))}${r.p >= 1000 ? ` · ${r.p >= 1e6 ? (r.p / 1e6).toFixed(1).replace('.', L(',', '.', {pt: `.`, es: `.`, it: `.`, de: `.`})) + ' M' : Math.round(r.p / 1000) + ' k'} ${L('hab.', 'pop.', {pt: `hab.`, es: `hab.`, it: `ab.`, de: `Einw.`})}` : ''}</small></button>`).join('')
         : (input.value.trim().length >= 2 ? `<div class="empty">${L('Aucun résultat. Essaie le nom local ou en anglais, ou place-le à la main.', 'No results. Try the local name, or place it by hand.', {pt: `Nenhum resultado. Tente o nome local ou posicione à mão.`, es: `Sin resultados. Prueba con el nombre local o colócalo a mano.`, it: `Nessun risultato. Prova il nome locale o posizionalo a mano.`, de: `Keine Ergebnisse. Versuche den lokalen Namen oder setze ihn von Hand.`})}</div>` : '');
       $('add-results').querySelectorAll('.result').forEach(b => b.onclick = () => choosePlace(results[+b.dataset.i]));
     };
