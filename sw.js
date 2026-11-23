@@ -1,6 +1,6 @@
 // Service worker : l'application marche hors ligne et se met à jour toute seule
-const CACHE = 'carnet3d-24b6219ac7';
-const FILES = ["./", "index.html", "manifest.webmanifest", "three.min.js", "OrbitControls.js", "world.json", "cities.txt", "tex-day.jpg", "tex-night.jpg", "tex-clouds.jpg", "tex-water.jpg", "tex-topo.jpg", "icon-192.png", "icon-512.png", "favicon.png", "apple-touch-icon.png"];
+const CACHE = 'carnet3d-d22bdd8d1d';
+const FILES = ["./", "index.html", "manifest.webmanifest", "three.min.js", "OrbitControls.js", "world.json", "cities.txt", "tex-day.jpg", "tex-night.jpg", "tex-clouds.jpg", "tex-water.jpg", "tex-topo.jpg", "tex-day-2k.jpg", "tex-night-2k.jpg", "icon-192.png", "icon-512.png", "favicon.png", "apple-touch-icon.png"];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
 });

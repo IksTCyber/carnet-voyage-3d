@@ -582,6 +582,7 @@
       <button data-style="satellite" onclick="setGlobeStyle('satellite')" data-en="🛰️ Satellite" data-pt="🛰️ Satélite" data-es="🛰️ Satélite" data-it="🛰️ Satellite" data-de="🛰️ Satellit">🛰️ Satellite</button>
       <button data-style="nuit" onclick="setGlobeStyle('nuit')" data-en="🌃 Night" data-pt="🌃 Noite" data-es="🌃 Noche" data-it="🌃 Notte" data-de="🌃 Nacht">🌃 Nuit</button>
     </div>
+    <button class="mi" id="menu-lite" onclick="toggleLite()">⚡ <span><span data-en="Light mode" data-pt="Modo leve" data-es="Modo ligero" data-it="Modalità leggera" data-de="Leicht-Modus">Mode allégé</span><small id="menu-lite-state"></small></span></button>
     <div class="sep"></div>
     <button class="mi edit-only" onclick="menuDo(openMusicDialog)">🎵 <span><span data-en="Slideshow music" data-pt="Música da apresentação" data-es="Música de la presentación" data-it="Musica della presentazione" data-de="Musik der Diashow">Musique du diaporama</span><small id="menu-music"></small></span></button>
     <button class="mi" onclick="menuDo(openBookDialog)">📖 <span data-en="Travel book (PDF)<small>To print or to give</small>" data-pt="Livro de viagem (PDF)&lt;small&gt;Para imprimir ou presentear&lt;/small&gt;" data-es="Libro de viaje (PDF)&lt;small&gt;Para imprimir o regalar&lt;/small&gt;" data-it="Libro di viaggio (PDF)&lt;small&gt;Da stampare o regalare&lt;/small&gt;" data-de="Reisebuch (PDF)&lt;small&gt;Zum Drucken oder Verschenken&lt;/small&gt;">Livre de voyage (PDF)<small>À imprimer ou à offrir</small></span></button>
@@ -788,7 +789,7 @@
   const TOTAL_COUNTRIES = 195;
   const EMBEDDED = window.EMBEDDED_CARNET || null;
   // Fichiers lourds (frontières, villes, images de la Terre) : chargés séparément, à la demande
-  const ASSET_FILES = { world: 'world.json', cities: 'cities.txt', day: 'tex-day.jpg', night: 'tex-night.jpg', clouds: 'tex-clouds.jpg', water: 'tex-water.jpg', topo: 'tex-topo.jpg' };
+  const ASSET_FILES = { world: 'world.json', cities: 'cities.txt', day: 'tex-day.jpg', night: 'tex-night.jpg', clouds: 'tex-clouds.jpg', water: 'tex-water.jpg', topo: 'tex-topo.jpg', day2k: 'tex-day-2k.jpg', night2k: 'tex-night-2k.jpg' };
   const EMB_ASSETS = (EMBEDDED && EMBEDDED.assets) || window.CARNET_ASSETS || {};
   const assetUrl = n => EMB_ASSETS[n] || ASSET_FILES[n];
   const assetTexts = {};
@@ -1163,9 +1164,28 @@
   const container = $('canvas-container');
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  // ── Mode allégé : pour les téléphones moins puissants (ou après un plantage) ──
+  const isPhone = Math.min(screen.width, screen.height) < 700;
+  const liteSetting = lsGet('lite-mode', 'auto');
+  const crashedLastTime = lsGet('boot-pending', '0') === '1';
+  const weakDevice = isPhone && ((navigator.deviceMemory && navigator.deviceMemory <= 4) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4));
+  const LITE = liteSetting === 'on' || (liteSetting === 'auto' && (weakDevice || crashedLastTime));
+  const liteAuto = LITE && liteSetting !== 'on';
+  if (liteSetting === 'auto' && crashedLastTime) lsSet('lite-mode', 'on');
+  lsSet('boot-pending', '1');
+  setTimeout(() => lsSet('boot-pending', '0'), 25000);
+  window.addEventListener('pagehide', () => lsSet('boot-pending', '0'));
+  const renderer = new THREE.WebGLRenderer({ antialias: !LITE, alpha: true, powerPreference: LITE ? 'low-power' : 'default' });
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, LITE ? 1.5 : 2));
+  renderer.domElement.addEventListener('webglcontextlost', e => {
+    e.preventDefault();
+    let n = 0; try { n = +sessionStorage.getItem('gl-lost') || 0; sessionStorage.setItem('gl-lost', String(n + 1)); } catch (x) {}
+    lsSet('lite-mode', 'on'); lsSet('boot-pending', '0');
+    const lt = $('loading-text'); $('loading').classList.remove('done');
+    if (lt) lt.textContent = n < 1 ? L('Le globe demande trop à ce téléphone : redémarrage en mode allégé…', 'The globe is too heavy for this phone: restarting in light mode…', {pt: `O globo está pesado demais para este celular: reiniciando no modo leve…`, es: `El globo es demasiado pesado para este móvil: reiniciando en modo ligero…`, it: `Il globo è troppo pesante per questo telefono: riavvio in modalità leggera…`, de: `Der Globus ist für dieses Handy zu schwer: Neustart im Leicht-Modus …`}) : L('Le globe 3D ne peut pas s’afficher sur cet appareil. Ferme les autres applications, puis recharge la page.', "The 3D globe can't be displayed on this device. Close other apps, then reload the page.", {pt: `O globo 3D não pode ser exibido neste aparelho. Feche os outros apps e recarregue a página.`, es: `El globo 3D no se puede mostrar en este dispositivo. Cierra las demás apps y recarga la página.`, it: `Il globo 3D non può essere visualizzato su questo dispositivo. Chiudi le altre app e ricarica la pagina.`, de: `Der 3D-Globus kann auf diesem Gerät nicht angezeigt werden. Schließe andere Apps und lade die Seite neu.`});
+    if (n < 1) setTimeout(() => location.reload(), 1500);
+  });
   renderer.outputEncoding = THREE.sRGBEncoding;
   container.appendChild(renderer.domElement);
 
@@ -1244,9 +1264,9 @@
     nuit: { visited: 'rgba(255,200,90,0.16)', lived: 'rgba(190,140,255,0.2)', project: 'rgba(255,140,0,0.14)', border: 'rgba(255,220,150,0.35)' }
   };
   const smallScreen = Math.min(screen.width, screen.height) < 700;
-  const TEX_W = Math.min(smallScreen ? 4096 : 8192, renderer.capabilities.maxTextureSize);
-  const OV_W = Math.min(4096, renderer.capabilities.maxTextureSize);
-  const ANISO = renderer.capabilities.getMaxAnisotropy();
+  const TEX_W = Math.min(LITE ? 2048 : smallScreen ? 4096 : 8192, renderer.capabilities.maxTextureSize);
+  const OV_W = Math.min(LITE ? 2048 : 4096, renderer.capabilities.maxTextureSize);
+  const ANISO = Math.min(LITE ? 2 : 16, renderer.capabilities.getMaxAnisotropy());
   const mapCanvas = document.createElement('canvas'); mapCanvas.width = TEX_W; mapCanvas.height = TEX_W / 2;
   const mapTexture = new THREE.CanvasTexture(mapCanvas);
   mapTexture.encoding = THREE.sRGBEncoding; mapTexture.anisotropy = ANISO;
@@ -1258,7 +1278,8 @@
   // Les images de la Terre sont chargées seulement quand le style en a besoin
   function photoTexture(kind) {
     if (photoTextures[kind]) return photoTextures[kind];
-    const tex = texLoader.load(assetUrl(kind), () => { tex.needsUpdate = true; requestRender(); });
+    const small = kind + '2k', hasSmall = EMBEDDED ? !!EMB_ASSETS[small] : !!ASSET_FILES[small] && !window.CARNET_ASSETS;
+    const tex = texLoader.load(assetUrl(LITE && hasSmall ? small : kind), () => { tex.needsUpdate = true; requestRender(); });
     tex.encoding = THREE.sRGBEncoding; tex.anisotropy = ANISO;
     return (photoTextures[kind] = tex);
   }
@@ -1387,7 +1408,7 @@
   }
   setInterval(() => { if (globeStyle === 'satellite' && realSun) { updateSun(); requestRender(); } }, 60000);
 
-  const globe = new THREE.Mesh(new THREE.SphereGeometry(R, 128, 128), stdMat);
+  const globe = new THREE.Mesh(new THREE.SphereGeometry(R, LITE ? 72 : 128, LITE ? 72 : 128), stdMat);
   scene.add(globe);
   const overlay = new THREE.Mesh(new THREE.SphereGeometry(R + 0.004, 128, 128), new THREE.MeshBasicMaterial({ map: ovTexture, transparent: true, depthWrite: false }));
   overlay.visible = false;
@@ -1452,7 +1473,7 @@
     stdMat.needsUpdate = true;
     overlay.visible = s !== 'carte';
     overlay.material.opacity = s === 'satellite' ? 0.85 : 1;
-    clouds.visible = s !== 'carte' || document.body.classList.contains('intro-on');
+    clouds.visible = !LITE && (s !== 'carte' || document.body.classList.contains('intro-on'));
     if (clouds.visible) cloudMat.uniforms.map.value = photoTexture('clouds');
     cloudMat.uniforms.strength.value = s === 'nuit' ? 0.22 : 0.9;
     cloudMat.uniforms.lit.value = s === 'satellite' ? 1 : 0;
@@ -3140,7 +3161,7 @@
       $('sv-progress').innerHTML = `<p class="hint">${L('Ajout du globe et des cartes…', 'Adding the globe and maps…', {pt: `Adicionando o globo e os mapas…`, es: `Añadiendo el globo y los mapas…`, it: `Aggiunta del globo e delle mappe…`, de: `Globus und Karten werden hinzugefügt …`})}</p>`;
       const assets = {};
       for (const n of ['world', 'cities']) { try { assets[n] = await assetText(n); } catch (e) { console.warn(e); } }
-      for (const n of ['day', 'night', 'clouds', 'water', 'topo']) { try { const r = await fetch(assetUrl(n)); assets[n] = await blobToDataUrl(await r.blob()); } catch (e) { console.warn(e); } }
+      for (const n of ['day', 'night', 'clouds', 'water', 'topo', 'day2k', 'night2k']) { try { const r = await fetch(assetUrl(n)); if (!r.ok) continue; assets[n] = await blobToDataUrl(await r.blob()); } catch (e) { console.warn(e); } }
       outCities.forEach(oc => oc.photos.forEach(p => { delete p.mini; }));
       const payload = { createdAt: stamp(), lang: LANG, cities: outCities, trips: clone(trips), settings: outSettings, media, assets };
       const json = JSON.stringify(payload).replace(/</g, '\\u003c');
@@ -4196,6 +4217,12 @@
     document.querySelectorAll('.local-only').forEach(el => el.classList.toggle('hidden', mode !== 'local'));
     updateInstallItem();
     document.querySelectorAll('.style-row button[data-style]').forEach(b => b.classList.toggle('active', b.dataset.style === globeStyle));
+    const ls = $('menu-lite-state'); if (ls) ls.textContent = LITE ? L('Activé : globe plus léger pour les téléphones moins puissants', 'On: lighter globe for less powerful phones', {pt: `Ativado: globo mais leve para celulares menos potentes`, es: `Activado: globo más ligero para móviles menos potentes`, it: `Attiva: globo più leggero per telefoni meno potenti`, de: `An: leichterer Globus für schwächere Handys`}) : L('Désactivé : à activer si l’appli rame ou plante', 'Off: turn on if the app is slow or crashes', {pt: `Desativado: ative se o app ficar lento ou travar`, es: `Desactivado: actívalo si la app va lenta o se bloquea`, it: `Disattiva: attivala se l'app è lenta o si blocca`, de: `Aus: einschalten, wenn die App ruckelt oder abstürzt`});
+  }
+  function toggleLite() {
+    lsSet('lite-mode', LITE ? 'off' : 'on'); lsSet('boot-pending', '0');
+    toast(LITE ? L('Mode allégé désactivé, redémarrage…', 'Light mode off, restarting…', {pt: `Modo leve desativado, reiniciando…`, es: `Modo ligero desactivado, reiniciando…`, it: `Modalità leggera disattivata, riavvio…`, de: `Leicht-Modus aus, Neustart …`}) : L('Mode allégé activé, redémarrage…', 'Light mode on, restarting…', {pt: `Modo leve ativado, reiniciando…`, es: `Modo ligero activado, reiniciando…`, it: `Modalità leggera attiva, riavvio…`, de: `Leicht-Modus an, Neustart …`}));
+    setTimeout(() => location.reload(), 900);
   }
   // ── Application installable (PWA) ──
   const PWA = !!document.querySelector('link[rel="manifest"]');
@@ -4323,6 +4350,7 @@
     requestAnimationFrame(animate);
     if (document.hidden) return;
     now = now || performance.now();
+    if (LITE && lastFrame && now - lastFrame < 31) return;
     const dt = Math.min(0.1, (now - (lastFrame || now)) / 1000); lastFrame = now;
     updateViewOffset();
     const dist = camera.position.length();
@@ -4367,6 +4395,7 @@
     initSync();
     if (mode === 'local' && !cities.length && !settings.welcomed) openWelcome();
     else if (shouldShowIntro()) openIntro();
+    if (crashedLastTime && LITE) setTimeout(() => toast(L('⚡ Mode allégé activé pour ce téléphone (☰ Plus pour le changer)', '⚡ Light mode turned on for this phone (☰ More to change it)', {pt: `⚡ Modo leve ativado para este celular (☰ Mais para mudar)`, es: `⚡ Modo ligero activado para este móvil (☰ Más para cambiarlo)`, it: `⚡ Modalità leggera attivata per questo telefono (☰ Altro per cambiarla)`, de: `⚡ Leicht-Modus für dieses Handy aktiviert (☰ Mehr zum Ändern)`}), 6000), 1500);
     loadMusic();
     if (mode === 'cloud' && !cities.length && canWrite) toast(L('Ton carnet est vide : ajoute ton premier lieu avec ➕', 'Your journal is empty: add your first place with ➕', {pt: `Seu diário está vazio: adicione seu primeiro lugar com ➕`, es: `Tu diario está vacío: añade tu primer lugar con ➕`, it: `Il tuo diario è vuoto: aggiungi il primo luogo con ➕`, de: `Dein Tagebuch ist leer: Füge deinen ersten Ort mit ➕ hinzu`}), 5000);
   })();
